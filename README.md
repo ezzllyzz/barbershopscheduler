@@ -2,7 +2,7 @@
 
 This is a group project for CPSC 312, 2021, UBC. 
 
-We will create a customer scheduler for barber shops in Haskell language. The users will be able to choose their barbers, their preferred date and time, or search for available slots.
+We will create a customer scheduler for barber shops in Haskell language. The users will be able to choose their barbers, their preferred time, or search for available slots.
 
 # Contributors
 Siwei, Zoe
