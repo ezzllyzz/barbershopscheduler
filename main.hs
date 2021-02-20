@@ -38,7 +38,7 @@ printSchedule name =
         let timeWanted = convertStringtoTime inputTimeAsString
         if checkAva slotList timeWanted
             then do 
-                putStrLn("What's your prefered name")
+                putStrLn("What's your prefered name(Do not leave it empty)")
                 preferredName <- getLine
                 putStrLn ("Adding your booking to the schedule...")
                 let newSlot = TakenSlot timeWanted preferredName
@@ -103,7 +103,7 @@ convertStringtoTime str
 
 -- take a slot, check if it is a FreeSlot
 ifFreeslot :: Typeable a => a -> Bool
-ifFreeslot ts = typeOf ts == typeOf (FreeSlot Twelve)
+ifFreeslot ts = typeOf ts == typeOf FreeSlot
 
 -- take a list of timeslot and a time, check if the time is a freeslot
 checkAva :: [TimeSlot] -> Time -> Bool
