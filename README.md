@@ -6,3 +6,10 @@ We will create a customer scheduler for barber shops in Haskell language. The us
 
 # Contributors
 Siwei, Zoe
+
+# To run the scheduler
+Enter   "ghci",
+        ":load main"
+        "run"
+
+There are 2 barbers in the application, choose "Tom" or "Tony" then choose your preferred schedule. 

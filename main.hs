@@ -10,7 +10,7 @@ run =
         hSetBuffering stdin LineBuffering
         openingTerminalText
         putStrLn("There are two babers in out shop, Tony and Tom")
-        putStrLn("Enter the name for your perfered baber:")
+        putStrLn("Enter the name for your perfered barber:")
         ans <- getLine
         if (elem ans ["Tony", "tony", "TONY"])
             then do
