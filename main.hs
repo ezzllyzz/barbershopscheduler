@@ -102,12 +102,15 @@ convertStringtoTime str
     | otherwise = error "not working time"
 
 -- take a slot, check if it is a FreeSlot
-ifFreeslot :: Typeable a => a -> Bool
--- ifFreeslot ts = typeOf ts == typeOf (FreeSlot Twelve)
-ifFreeslot ts = typeOf ts == typeOf FreeSlot
+-- as there are no way to check for the inside constructor, 
+--   We choose to check if there are element of "freeslot" when show the slot to string and split by ' '
+ifFreeslot :: Show a => a -> Bool
+ifFreeslot ts = 
+    (elem "FreeSlot" (splitSep (== ' ') (show ts)))
 
 -- take a list of timeslot and a time, check if the time is a freeslot
 checkAva :: [TimeSlot] -> Time -> Bool
+checkAva [] _ = False 
 checkAva (h:t) newTime  
     | time (h) == newTime = ifFreeslot h 
     | otherwise = True
