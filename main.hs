@@ -9,8 +9,8 @@ run =
     do
         hSetBuffering stdin LineBuffering
         openingTerminalText
-        putStrLn("There are two babers in out shop, Tony and Tom")
-        putStrLn("Enter the name for your perfered barber:")
+        putStrLn("There are two barbers in our shop, Tony and Tom")
+        putStrLn("Enter the name for your perferred barber:")
         ans <- getLine
         if (elem ans ["Tony", "tony", "TONY"])
             then do
@@ -103,19 +103,21 @@ convertStringtoTime str
 
 -- take a slot, check if it is a FreeSlot
 ifFreeslot :: Typeable a => a -> Bool
+-- ifFreeslot ts = typeOf ts == typeOf (FreeSlot Twelve)
 ifFreeslot ts = typeOf ts == typeOf FreeSlot
 
 -- take a list of timeslot and a time, check if the time is a freeslot
 checkAva :: [TimeSlot] -> Time -> Bool
 checkAva (h:t) newTime  
     | time (h) == newTime = ifFreeslot h 
-    | otherwise = checkAva t newTime
+    | otherwise = True
 
 -- take a list of timeslot and a new timeslot to change the original one
 addNewBooking :: [TimeSlot] -> TimeSlot -> [TimeSlot]
 addNewBooking [] slot = []
 addNewBooking (h:t) slot 
     | time (h) == time (slot) = slot : t
+--    | otherwise = checkAva t newTime
     | otherwise = h : addNewBooking t slot
 
 -- take a list of list of string and read it to a list of timeslot
