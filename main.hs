@@ -10,7 +10,7 @@ run =
         hSetBuffering stdin LineBuffering
         openingTerminalText
         putStrLn("There are two babers in out shop, Tony and Tom")
-        putStrLn("Enter the name for your perfered baber:")
+        putStrLn("Enter the name for your perfered barber:")
         ans <- getLine
         if (elem ans ["Tony", "tony", "TONY"])
             then do
@@ -38,7 +38,7 @@ printSchedule name =
         let timeWanted = convertStringtoTime inputTimeAsString
         if checkAva slotList timeWanted
             then do 
-                putStrLn("What's your prefered name")
+                putStrLn("What's your prefered name(Do not leave it empty)")
                 preferredName <- getLine
                 putStrLn ("Adding your booking to the schedule...")
                 let newSlot = TakenSlot timeWanted preferredName
@@ -103,7 +103,7 @@ convertStringtoTime str
 
 -- take a slot, check if it is a FreeSlot
 ifFreeslot :: Typeable a => a -> Bool
-ifFreeslot ts = typeOf ts == typeOf (FreeSlot Twelve)
+ifFreeslot ts = typeOf ts == typeOf FreeSlot
 
 -- take a list of timeslot and a time, check if the time is a freeslot
 checkAva :: [TimeSlot] -> Time -> Bool
