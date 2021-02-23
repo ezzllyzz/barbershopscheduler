@@ -27,7 +27,7 @@ run =
 
 
 
-
+-- take the csv file by barber's name then process new schedule booking
 printSchedule :: String -> IO ()
 printSchedule name =
     do
@@ -43,19 +43,7 @@ printSchedule name =
         let timeWanted = convertStringtoTime inputTimeAsString
         if checkAva slotList timeWanted
             then do 
-                putStrLn("What's your prefered name(Do not leave it empty)")
-                preferredName <- getLine
-                putStrLn ("Adding your booking to the schedule...")
-                let newSlot = TakenSlot timeWanted preferredName
-                let newSchedule = addNewBooking slotList newSlot
-                let newStringSchedule = toCsv newSchedule
-                when (length newStringSchedule > 0) $
-                    writeFile (name ++ ".csv") newStringSchedule
-                putStrLn ("reschedule complete, here's the new schedule for " ++ name)
-                newfile <- readCsv (name ++ ".csv")
-                let newSlotList = readCsvToSlot newfile
-                let newPrintableSlot = toPrintableString newSlotList
-                putStrLn(newPrintableSlot)
+                processBooking name timeWanted slotList
         else do 
             -- error "the time you pick is not avaliable, please choose another time"
             putStrLn("The time you pick is unavailable today.")
@@ -73,7 +61,8 @@ printSchedule name =
                 putStrLn("...")
 
         
-
+-- find the nearest availble time to schedule, process booking schedule
+-- when entered time is not availble for the selected barber
 checkNearest :: String -> [TimeSlot] -> Integer -> Integer -> IO ()
 checkNearest name slotList earlier later = 
     if (earlier > 10 || later < 17)
@@ -84,7 +73,6 @@ checkNearest name slotList earlier later =
             let sl = show setl
 
             let availableList = [se, sl]
-            -- print(availableList)
             let availabless = map (\ x -> x++":00") availableList
             let availables = map convertStringtoTime availabless
 
@@ -102,19 +90,7 @@ checkNearest name slotList earlier later =
                     let timeWanted = convertStringtoTime inputTimeAsString
                     if checkAva slotList timeWanted
                         then do 
-                            putStrLn("What's your prefered name(Do not leave it empty)")
-                            preferredName <- getLine
-                            putStrLn ("Adding your booking to the schedule...")
-                            let newSlot = TakenSlot timeWanted preferredName
-                            let newSchedule = addNewBooking slotList newSlot
-                            let newStringSchedule = toCsv newSchedule
-                            when (length newStringSchedule > 0) $
-                                writeFile (name ++ ".csv") newStringSchedule
-                            putStrLn ("reschedule complete, here's the new schedule for " ++ name)
-                            newfile <- readCsv (name ++ ".csv")
-                            let newSlotList = readCsvToSlot newfile
-                            let newPrintableSlot = toPrintableString newSlotList
-                            putStrLn(newPrintableSlot)
+                            processBooking name timeWanted slotList
                     else do 
                         putStrLn("Thank you for using barber shop scheduler. ")
             else do
@@ -122,34 +98,29 @@ checkNearest name slotList earlier later =
     else do
             putStrLn("No time is available today for " ++ name ++ ", please check other barbers.")
 
--- take a list of time slot and produce a string contain all of the element 
-toPrintableString :: [TimeSlot] -> String
-toPrintableString [] = ""
-toPrintableString lst = concatMap printSlot lst
-    where
-        printSlot (TakenSlot time name) = (convertTimetoString time) ++ "-----" ++ name ++ "\n"
-        printSlot (FreeSlot time) = (convertTimetoString time) ++ "-----"  ++ "\n"
 
-
-toSimpleTimeString :: [String] -> String
-toSimpleTimeString [] = ""
-toSimpleTimeString lst = concatMap convertTimetoStr lst
-    where
-        convertTimetoStr t = t ++ "\n"
-
+-- takes a list of time and a schedule csv of a barber then produce a list of time which are available in the csv file
 existFreeSlot :: [Time] -> [TimeSlot] -> [Time]
 existFreeSlot [] slotList = []
 existFreeSlot lst slotList = filter (checkAva slotList) lst
 
-
-openingTerminalText :: IO ()
-openingTerminalText = 
+-- takes barber's name, time needed to be scheduled and list of schedules in csv file then save the new schedule to the csv file
+processBooking :: String -> Time -> [TimeSlot] -> IO ()
+processBooking name timeWanted slotList = 
     do
-        putStrLn("")
-        putStrLn("************************\n")
-        putStrLn("Hello! Welcome to Barber Scheduler.")
-
-
+        putStrLn("What's your prefered name(Do not leave it empty)")
+        preferredName <- getLine
+        putStrLn ("Adding your booking to the schedule...")
+        let newSlot = TakenSlot timeWanted preferredName
+        let newSchedule = addNewBooking slotList newSlot
+        let newStringSchedule = toCsv newSchedule
+        when (length newStringSchedule > 0) $
+            writeFile (name ++ ".csv") newStringSchedule
+        putStrLn ("reschedule complete, here's the new schedule for " ++ name)
+        newfile <- readCsv (name ++ ".csv")
+        let newSlotList = readCsvToSlot newfile
+        let newPrintableSlot = toPrintableString newSlotList
+        putStrLn(newPrintableSlot)
 
 -- convert Time to String which is easier to read
 convertTimetoString :: Time -> String
@@ -208,13 +179,27 @@ data TimeSlot = TakenSlot { time :: Time, name :: String}
 isFree :: Show a => a -> Bool
 isFree ts = (elem "FreeSlot" (splitSep (== ' ') (show ts)))
 
-
 -- take a list of timeslot and a time, check if the time is a freeslot
 checkAva :: [TimeSlot] -> Time -> Bool
 checkAva [] _ = False 
 checkAva (h:t) newTime  
     | time (h) == newTime = isFree h 
     | otherwise = checkAva t newTime
+
+-- take a list of time slot and produce a string contain all of the elements 
+toPrintableString :: [TimeSlot] -> String
+toPrintableString [] = ""
+toPrintableString lst = concatMap printSlot lst
+    where
+        printSlot (TakenSlot time name) = (convertTimetoString time) ++ "-----" ++ name ++ "\n"
+        printSlot (FreeSlot time) = (convertTimetoString time) ++ "-----"  ++ "\n"
+
+-- takes a list of time of string type then produce a string contains all the times
+toSimpleTimeString :: [String] -> String
+toSimpleTimeString [] = ""
+toSimpleTimeString lst = concatMap convertTimetoStr lst
+    where
+        convertTimetoStr t = t ++ "\n"
 
 -- take a list of timeslot and a new timeslot to change the original one
 addNewBooking :: [TimeSlot] -> TimeSlot -> [TimeSlot]
@@ -233,8 +218,6 @@ readCsvToSlot lst = map converttoSlot lst
 converttoSlot :: [String] -> TimeSlot
 converttoSlot (a : b : c) = TakenSlot (read a :: Time) b
 converttoSlot (a : b ) = FreeSlot (read a :: Time)
-
-
 
 -- take a list of timeslot and convert them into a list of string
 toString :: [TimeSlot] -> [String]
@@ -255,7 +238,13 @@ mergeWith str [a] = a
 mergeWith str (h:t) =
     h ++ str ++ (mergeWith str t)
 
-
+-- produce opening welcome text
+openingTerminalText :: IO ()
+openingTerminalText = 
+    do
+        putStrLn("")
+        putStrLn("************************\n")
+        putStrLn("Hello! Welcome to Barber Scheduler.")
 
 -- credit to David Poole, Homework 3 Question 3
 splitSep :: (a -> Bool) -> [a] -> [[a]]
