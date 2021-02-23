@@ -10,7 +10,7 @@ Siwei, Zoe
 In Terminal, enter:\
         ghci\
         :load main\
-        run\
+        run
 
 
 There are 2 available barbers in the application, \
@@ -25,7 +25,7 @@ When I add new schedule to 16:00 for a name "Lin"\
 10:00-----"\"Cat\""\
 12:00-----"\"Amy\" "\
 14:00-----"\"David\""\
-16:00-----"Lin"\
+16:00-----"Lin"
 
 2:\
 new features can be added:\
