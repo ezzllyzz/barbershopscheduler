@@ -29,6 +29,7 @@ When I add new schedule to 16:00 for a name "Lin"\
 
 2:\
 new features can be added:\
+print all schedules for all barbers in the main menu?\
 cancel a schedule\
 if you enter 14:00 for Tom and it is unavailable to schedule, check if other barbers' 14:00 are available?
 
