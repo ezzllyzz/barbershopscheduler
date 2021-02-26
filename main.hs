@@ -270,8 +270,8 @@ toPrintableString :: [TimeSlot] -> String
 toPrintableString [] = ""
 toPrintableString lst = concatMap printSlot lst
     where
-        printSlot (TakenSlot time name) = (convertTimetoString time) ++ "-----" ++ name ++ "\n"
-        printSlot (FreeSlot time) = (convertTimetoString time) ++ "-----"  ++ "\n"
+        printSlot (TakenSlot time name) = (convertTimetoString time) ++ " ----- " ++ name ++ "\n"
+        printSlot (FreeSlot time) = (convertTimetoString time) ++ " ----- "  ++ "\n"
 
 -- takes a list of time of string type then produce a string contains all the times
 toSimpleTimeString :: [String] -> String
