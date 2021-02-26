@@ -46,7 +46,7 @@ chooseDate =
                 else 
                     do
                         chooseBaber datePreferedStr
-        else if (elem datePreferedStr ["quit", "QUIT", "Q"])
+        else if (elem datePreferedStr ["quit", "QUIT", "Q", "q"])
             then do 
                 putStrLn("You are leaving the booking system....")
         else 
@@ -68,12 +68,12 @@ chooseBaber date =
         else if (elem ans ["Tom", "tom", "TOM"])
             then do
                 printSchedule "tom" date
-        else if (elem ans ["quit", "QUIT", "Q"])
+        else if (elem ans ["quit", "QUIT", "Q", "q"])
             then do 
                 putStrLn("You are leaving the booking system....")
         else 
             do
-                putStrLn("There are no such barber in our shop, please rechoose your baber") 
+                putStrLn("There are no such barber in our shop, please enter a valid barber name (tom or tony)") 
                 chooseBaber date
 
 
@@ -114,25 +114,34 @@ checkSchedule name date slotList=
     do 
         putStrLn("When whould you like to design your hair (please enter in form of xx:00)")
         inputTimeAsString <- getLine 
-        let timeWanted = convertStringtoTime inputTimeAsString
-        if checkAva slotList timeWanted
+        if (elem inputTimeAsString ["10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"])
             then do 
-                    processBooking name timeWanted slotList date
-        else do 
-                -- error "the time you pick is not avaliable, please choose another time"
-                putStrLn("The time you pick is unavailable today.")
-                putStrLn("...")
-                let timePick = take 2 inputTimeAsString -- "12"
-                let timePicked = read timePick::Integer
+                let timeWanted = convertStringtoTime inputTimeAsString
+                if checkAva slotList timeWanted
+                    then do 
+                        processBooking name timeWanted slotList date
+                else do 
+                    -- error "the time you pick is not avaliable, please choose another time"
+                    putStrLn("The time " ++ inputTimeAsString ++ " on " ++ date ++ " is unavailable.")
+                    putStrLn("...")
+                    let timePick = take 2 inputTimeAsString -- "12"
+                    let timePicked = read timePick::Integer -- 12
 
-                if (timePicked > 10 || timePicked < 17)
-                    then do
-                        putStrLn("Trying to find the nearest available time today for " ++ name ++ " ...")
-                        putStrLn("...")
-                        checkNearest name slotList timePicked timePicked date
-                else do
+                    if (timePicked >= 10 || timePicked <= 17)
+                        then do
+                            putStrLn("Trying to find the nearest available time on " ++ date ++ " for " ++ name ++ " ...")
+                            checkNearest name slotList timePicked timePicked date
+                    else do
                         putStrLn("This is not the working time for " ++ name ++ ", please check other avaliable time.")
                         putStrLn("...")
+        else if (elem inputTimeAsString ["quit", "QUIT", "Q", "q"])
+            then do 
+                putStrLn("You are leaving the booking system....")
+        else 
+            do
+                putStrLn("Invalid input, please enter in form of xx:00") 
+                checkSchedule name date slotList
+        
 
 
         
@@ -140,13 +149,13 @@ checkSchedule name date slotList=
 -- when entered time is not availble for the selected barber
 checkNearest :: String -> [TimeSlot] -> Integer -> Integer -> String -> IO ()
 checkNearest name slotList earlier later date = 
-    if (earlier > 10 || later < 17)
+    if (earlier >= 10 || later <= 17)
         then do
             let sete = earlier-1
             let setl = later+1
             let se = show sete
             let sl = show setl
-
+            -- ??????????????????????????????????
             let availableList = [se, sl]
             let availabless = map (\ x -> x++":00") availableList
             let availables = map convertStringtoTime availabless
@@ -160,19 +169,30 @@ checkNearest name slotList earlier later date =
                     putStrLn("---------------------------------------------")
                     putStrLn(printResults)
                     putStrLn("---------------------------------------------")
-                    putStrLn("Please enter the time (in form of xx:00) if you want to schedule the time listed above")
+                    putStrLn("Please enter the time (in form of xx:00)")
+                    putStrLn("if you want to schedule an available time listed above")
                     inputTimeAsString <- getLine 
-                    let timeWanted = convertStringtoTime inputTimeAsString
-                    if checkAva slotList timeWanted
+
+                    if (elem inputTimeAsString ["10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"])
                         then do 
-                            processBooking name timeWanted slotList date
-                    else do 
-                        putStrLn("Thank you for using barber shop scheduler. ")
+                            let timeWanted = convertStringtoTime inputTimeAsString
+                            if checkAva slotList timeWanted
+                                then do 
+                                    processBooking name timeWanted slotList date
+                            else do 
+                                putStrLn("This will not be printed")
+                    else if (elem inputTimeAsString ["quit", "QUIT", "Q", "q"])
+                        then do 
+                            putStrLn("You are leaving the booking system....")
+                    else 
+                        do
+                            putStrLn("Invalid input, please enter in form of xx:00") 
+                            checkNearest name slotList earlier later date  
             else do
-                putStrLn("No time is available today for " ++ name ++ ", please check other date or baber.")
+                checkNearest name slotList sete setl date
                 
     else do
-            putStrLn("No time is available today for " ++ name ++ ", please check other date or barbers.")
+            putStrLn("No time is available on " ++ date ++ " for " ++ name ++ ", please check other dates or barbers.")
             
 
 
@@ -185,7 +205,7 @@ existFreeSlot lst slotList = filter (checkAva slotList) lst
 
 processBooking name timeWanted slotList date = 
     do
-        putStrLn("What's your prefered name(Do not leave it empty)")
+        putStrLn("What's your prefered name? ")
         preferredName <- getLine
         putStrLn ("Adding your booking to the schedule...")
         let newSlot = TakenSlot timeWanted preferredName
@@ -193,7 +213,7 @@ processBooking name timeWanted slotList date =
         let newStringSchedule = toCsv newSchedule
         when (length newStringSchedule > 0) $
             writeFile (name ++ date ++ ".csv") newStringSchedule
-        putStrLn ("reschedule complete, here's the new schedule for " ++ name ++ " on " ++ date)
+        putStrLn ("Booking complete! here's the new schedule for " ++ name ++ " on " ++ date)
         newfile <- readCsv (name ++ date ++ ".csv")
         let newSlotList = readCsvToSlot newfile
         let newPrintableSlot = toPrintableString newSlotList
