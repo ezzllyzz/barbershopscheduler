@@ -16,7 +16,7 @@ In Terminal, enter:\
 There are 2 available barbers in the application, \
 you can enter "tom" or "tony" as your preferred barber, then choose your preferred date and time. 
 
-We use real-time date data, you can only enter a date after today. \
+We use real-time date data type, you can only enter a date on or after today. \
 We assume the shop is closed on every Tuesday, you cannot enter a date that is on Tuesday.\
 To test this, try enter the date "2021-03-09" which is a Tuesday.
 
@@ -24,10 +24,3 @@ If you enter a time that is occupied, we will try to find the nearest available 
 To test this, try enter the date "2021-11-11", barber "tom", then "10:00" which is an unavailable time, you will see the nearest available time we found on that day and you can book a schedule on the available time. 
 
 Enter "q" or "quit" to quit the program.
-
-# Problems need to be fixed
-
-new features can be added:\
-print all schedules for all barbers in the main menu?\
-cancel a schedule\
-if you enter 14:00 for Tom and it is unavailable to schedule, check if other barbers' 14:00 are available?

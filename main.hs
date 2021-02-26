@@ -7,8 +7,6 @@ import System.IO
 import System.Directory
 
 
-test = [FreeSlot {time = Ten},TakenSlot {time = Twelve, name = "Amy"}]
-
 -- Start function
 run :: IO ()
 run = 
@@ -17,12 +15,53 @@ run =
         putStrLn("")
         putStrLn("************************\n")
         putStrLn("Hello! Welcome to Barber Scheduler.")
-        chooseDate
+        mainMenu
+        
+-- print the options in main menu
+mainMenu :: IO ()
+mainMenu = 
+    do
+        putStrLn("")
+        putStrLn("Enter 1 to book a schedule")
+        putStrLn("Enter 2 to cancel a schedule")
+        putStrLn("Enter q to quit")
+        func <- getLine 
+        if func == "1"
+            then do
+                chooseDateBooking
+        else if func == "2"
+            then do
+                chooseDateCancel
+        else if (elem func ["quit", "QUIT", "Q", "q"])
+            then do 
+                putStrLn("You are leaving the booking system....")
+        else 
+            do
+                putStrLn("Invalid input!") 
+                mainMenu
+
+-- takes user input to quit or go to main menu
+checkInputQuit :: IO ()
+checkInputQuit =
+    do
+        putStrLn("")
+        putStrLn("Enter q to quit, or m to go back to main menu.")
+        ans <- getLine
+        if (elem ans ["quit", "QUIT", "Q", "q"])
+            then do 
+                putStrLn("You are leaving the booking system....")
+        else if (elem ans ["m", "M"])
+            then do 
+                mainMenu
+        else 
+            do
+                putStrLn("Invalid input!") 
+                checkInputQuit
 
 
--- choose the booking date
-chooseDate :: IO ()
-chooseDate = 
+-- choose the date for new booking
+chooseDateBooking :: IO ()
+chooseDateBooking = 
     do
         putStrLn("What date do you plan to come to our shop? In form of YYYY-MM-DD")
         putStrLn("~~~NOTE that we are closed every tuesday~~~")
@@ -37,27 +76,27 @@ chooseDate =
                 
                 if datePrefered < today
                     then do
-                            putStrLn("The date you enter is invalid, please enter from today after") 
-                            chooseDate
+                            putStrLn("The date you enter is invalid, please enter a date on or after today") 
+                            chooseDateBooking
                 else if (dayoFWeek == Tuesday)
                     then do
                             putStrLn("We are not working this day, please enter another valid date") 
-                            chooseDate      
+                            chooseDateBooking      
                 else 
                     do
-                        chooseBaber datePreferedStr
+                        chooseBarber datePreferedStr
         else if (elem datePreferedStr ["quit", "QUIT", "Q", "q"])
             then do 
                 putStrLn("You are leaving the booking system....")
         else 
             do
-                putStrLn("The date you enter is invalid, please enter another day") 
-                chooseDate
+                putStrLn("The date you enter is invalid.") 
+                chooseDateBooking
 
 
 -- take the date and check for barber
-chooseBaber :: String -> IO ()
-chooseBaber date = 
+chooseBarber :: String -> IO ()
+chooseBarber date = 
     do
         putStrLn("There are two barbers in our barber shop: Tony and Tom")
         putStrLn("Please enter the name of your perferred barber to see his/her schedule:")
@@ -73,9 +112,67 @@ chooseBaber date =
                 putStrLn("You are leaving the booking system....")
         else 
             do
-                putStrLn("There are no such barber in our shop, please enter a valid barber name (tom or tony)") 
-                chooseBaber date
+                putStrLn("There are no such barber in our shop!") 
+                chooseBarber date
 
+-- choose the date for cancelling a schedule
+chooseDateCancel :: IO ()
+chooseDateCancel = 
+    do
+        putStrLn("Enter the date you want to cancel your schedule ( in form of YYYY-MM-DD )")
+        dateCancel <- getLine
+        if (isYearFormat dateCancel) 
+            then do
+                chooseBarberCancel dateCancel
+        else if (elem dateCancel ["quit", "QUIT", "Q", "q"])
+            then do 
+                putStrLn("You are leaving the booking system....")
+        else 
+            do
+                putStrLn("The date you enter is invalid.D") 
+                chooseDateCancel
+
+-- choose the barber that the user want to cancel the schedule for
+chooseBarberCancel :: String -> IO ()
+chooseBarberCancel date =
+    do
+        putStrLn("There are two barbers in our barber shop: Tony and Tom")
+        putStrLn("Which barber do you want to cancel the schedule for?")
+        ans <- getLine
+        if (elem ans ["Tony", "tony", "TONY"])
+            then do 
+                ifDateExist "tony" date
+        else if (elem ans ["Tom", "tom", "TOM"])
+            then do
+                ifDateExist "tom" date
+        else if (elem ans ["quit", "QUIT", "Q", "q"])
+            then do 
+                putStrLn("You are leaving the booking system....")
+        else 
+            do
+                putStrLn("There are no such barber in our shop!") 
+                chooseBarberCancel date
+
+-- checks if the csv file on the selected date for a barber exists
+ifDateExist :: [Char] -> [Char] -> IO ()
+ifDateExist name date =
+    do
+        let fileName = name ++ date ++ ".csv"
+        doExist <- (doesFileExist fileName)
+        if doExist
+            then do
+                file <- readCsv (fileName)
+                let slotList = readCsvToSlot file
+                let printableSlot = toPrintableString slotList
+                putStrLn(name ++ " has the following schedule on " ++ date ++ ": ")
+                putStrLn("---------------------------------------------")
+                putStrLn(printableSlot)
+                processCancel name date slotList 
+        else 
+            do
+                putStrLn("The schedule you want to cancel does not exist.")
+                checkInputQuit
+            
 
 -- take the csv file at preferred date then show the slotlist as table
 printSchedule :: [Char] -> [Char] -> IO ()
@@ -87,30 +184,60 @@ printSchedule name date =
             then do
                 file <- readCsv (fileName)
                 let slotList = readCsvToSlot file
-                -- note slotList = [FreeSlot {time = Ten},TakenSlot {time = Twelve, name = "Amy"}, ...]
                 let printableSlot = toPrintableString slotList
                 putStrLn(name ++ " has the following schedule: ")
                 putStrLn("---------------------------------------------")
                 putStrLn(printableSlot)
                 checkSchedule name date slotList 
-                
         else 
             do
                 file <- readCsv (name ++ ".csv")
                 let slotList = readCsvToSlot file
-                -- note slotList = [FreeSlot {time = Ten},TakenSlot {time = Twelve, name = "Amy"}, ...]
                 let printableSlot = toPrintableString slotList
                 putStrLn(name ++ " has the following schedule: ")
                 putStrLn("---------------------------------------------")
                 putStrLn(printableSlot)
                 checkSchedule name date slotList
                 
-
+-- takes barber's name, date and the schecule list of the barber then process schedule cancelling
+processCancel :: [Char] -> [Char] -> [TimeSlot]  -> IO ()
+processCancel name date slotList = 
+    do
+        putStrLn("Enter the time (in form of xx:00) that you want to cancel the schedule at: ")
+        inputTimeAsString <- getLine 
+        if (elem inputTimeAsString ["10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"])
+            then do
+                let timeWanted = convertStringtoTime inputTimeAsString
+                if checkAva slotList timeWanted 
+                    then do
+                        putStrLn("Cancelling failed! There is no schedule on " ++ inputTimeAsString ++ "." )
+                        checkInputQuit
+                else 
+                    do
+                        putStrLn("")
+                        let newSlot = FreeSlot timeWanted
+                        let newSchedule = addNewBooking slotList newSlot
+                        let newStringSchedule = toCsv newSchedule
+                        when (length newStringSchedule > 0) $
+                            writeFile (name ++ date ++ ".csv") newStringSchedule
+                        putStrLn ("Cancelling complete! Here's the new schedule for " ++ name ++ " on " ++ date)
+                        newfile <- readCsv (name ++ date ++ ".csv")
+                        let newSlotList = readCsvToSlot newfile
+                        let newPrintableSlot = toPrintableString newSlotList
+                        putStrLn(newPrintableSlot)
+                        checkInputQuit
+        else if (elem inputTimeAsString ["quit", "QUIT", "Q", "q"])
+            then do 
+                putStrLn("You are leaving the booking system....")
+        else 
+            do
+                putStrLn("Invalid input!") 
+                processCancel name date slotList
 
 
 -- take the slotlist of the asked day by barber's name then process new schedule booking for time
 checkSchedule :: [Char] -> [Char] -> [TimeSlot]  -> IO ()
-checkSchedule name date slotList= 
+checkSchedule name date slotList = 
     do 
         putStrLn("When whould you like to design your hair (please enter in form of xx:00)")
         inputTimeAsString <- getLine 
@@ -121,7 +248,6 @@ checkSchedule name date slotList=
                     then do 
                         processBooking name timeWanted slotList date
                 else do 
-                    -- error "the time you pick is not avaliable, please choose another time"
                     putStrLn("The time " ++ inputTimeAsString ++ " on " ++ date ++ " is unavailable.")
                     putStrLn("...")
                     let timePick = take 2 inputTimeAsString -- "12"
@@ -153,10 +279,10 @@ checkNearest name slotList earlier later date =
         then do
             let sete = earlier-1
             let setl = later+1
-            let se = show sete
-            let sl = show setl
-            -- ??????????????????????????????????
-            let availableList = [se, sl]
+
+            let availableList0 = [sete, setl]
+            let availableList1 = filter (\ x -> x>=10 && x<=17) availableList0
+            let availableList = map show availableList1
             let availabless = map (\ x -> x++":00") availableList
             let availables = map convertStringtoTime availabless
 
@@ -186,7 +312,7 @@ checkNearest name slotList earlier later date =
                             putStrLn("You are leaving the booking system....")
                     else 
                         do
-                            putStrLn("Invalid input, please enter in form of xx:00") 
+                            putStrLn("Invalid input!") 
                             checkNearest name slotList earlier later date  
             else do
                 checkNearest name slotList sete setl date
@@ -202,7 +328,6 @@ existFreeSlot [] slotList = []
 existFreeSlot lst slotList = filter (checkAva slotList) lst
 
 -- takes barber's name, time needed to be scheduled and list of schedules in csv file then save the new schedule to the csv file
-
 processBooking name timeWanted slotList date = 
     do
         putStrLn("What's your prefered name? ")
@@ -218,8 +343,7 @@ processBooking name timeWanted slotList date =
         let newSlotList = readCsvToSlot newfile
         let newPrintableSlot = toPrintableString newSlotList
         putStrLn(newPrintableSlot)
-
-
+        checkInputQuit
 
 -- convert Time to String which is easier to read
 convertTimetoString :: Time -> String
@@ -237,16 +361,6 @@ convertTimetoString t
 -- convert String to Time 
 convertStringtoTime :: String -> Time
 convertStringtoTime str 
-    | str == "0:00" = Zero
-    | str == "1:00" = One
-    | str == "2:00" = Two
-    | str == "3:00" = Three
-    | str == "4:00" = Four
-    | str == "5:00" = Five
-    | str == "6:00" = Six
-    | str == "7:00" = Seven
-    | str == "8:00" = Eight
-    | str == "9:00" = Nine
     | str == "10:00" = Ten 
     | str == "11:00" = Eleven 
     | str == "12:00" = Twelve 
@@ -254,17 +368,12 @@ convertStringtoTime str
     | str == "14:00" = Fourteen 
     | str == "15:00" = Fifteen 
     | str == "16:00" = Sixteen 
-    | str == "17:00" = Seventeen 
-    | str == "18:00" = Eighteen
-    | str == "19:00" = Nineteen
-    | str == "20:00" = Twenty
+    | str == "17:00" = Seventeen
     | otherwise = error "not working time"
 
 
 -- data type for the Time (in order)
-data Time = Zero | One | Two | Three | Four | Five | Six | Seven | Eight | Nine | Ten | Eleven
-           | Twelve | Thirteen | Fourteen | Fifteen | Sixteen 
-           | Seventeen | Eighteen | Nineteen | Twenty 
+data Time = Ten | Eleven | Twelve | Thirteen | Fourteen | Fifteen | Sixteen | Seventeen 
             deriving (Ord, Eq, Show, Read, Typeable)
 
 data TimeSlot = TakenSlot { time :: Time, name :: [Char]}   
