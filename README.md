@@ -20,7 +20,10 @@ We use real-time date data type, you can only enter a date on or after today. \
 We assume the shop is closed on every Tuesday, you cannot enter a date that is on Tuesday.\
 To test this, try enter the date "2021-03-09" which is a Tuesday.
 
-If you enter a time that is occupied, we will try to find the nearest available time in the same day to schedule.\
-To test this, try enter the date "2021-11-11", barber "tom", then "10:00" which is an unavailable time, you will see the nearest available time we found on that day and you can book a schedule on the available time. 
+If you enter a time that is unavailable, the program has 2 options to give you suggestions:\
+1. try to find the nearest available time in the same day, for the same barber\
+2. try to find other barber that is available at the chosed date and time
+   
+To test this, try enter the date "2021-11-11" or "2021-11-12", and choose barber "tom", then choose an unavailable time in the schedule list to see what suggestions the program gives you. 
 
 Enter "q" or "quit" to quit the program.

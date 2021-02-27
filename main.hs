@@ -153,26 +153,7 @@ chooseBarberCancel date =
                 putStrLn("There are no such barber in our shop!") 
                 chooseBarberCancel date
 
--- checks if the csv file on the selected date for a barber exists
-ifDateExist :: [Char] -> [Char] -> IO ()
-ifDateExist name date =
-    do
-        let fileName = name ++ date ++ ".csv"
-        doExist <- (doesFileExist fileName)
-        if doExist
-            then do
-                file <- readCsv (fileName)
-                let slotList = readCsvToSlot file
-                let printableSlot = toPrintableString slotList
-                putStrLn(name ++ " has the following schedule on " ++ date ++ ": ")
-                putStrLn("---------------------------------------------")
-                putStrLn(printableSlot)
-                processCancel name date slotList 
-        else 
-            do
-                putStrLn("The schedule you want to cancel does not exist.")
-                checkInputQuit
-            
+
 
 -- take the csv file at preferred date then show the slotlist as table
 printSchedule :: [Char] -> [Char] -> IO ()
@@ -249,32 +230,136 @@ checkSchedule name date slotList =
                         processBooking name timeWanted slotList date
                 else do 
                     putStrLn("The time " ++ inputTimeAsString ++ " on " ++ date ++ " is unavailable.")
-                    putStrLn("...")
-                    let timePick = take 2 inputTimeAsString -- "12"
-                    let timePicked = read timePick::Integer -- 12
+                    checkOptions name date inputTimeAsString slotList
 
-                    if (timePicked >= 10 || timePicked <= 17)
-                        then do
-                            putStrLn("Trying to find the nearest available time on " ++ date ++ " for " ++ name ++ " ...")
-                            checkNearest name slotList timePicked timePicked date
-                    else do
-                        putStrLn("This is not the working time for " ++ name ++ ", please check other avaliable time.")
-                        putStrLn("...")
         else if (elem inputTimeAsString ["quit", "QUIT", "Q", "q"])
             then do 
                 putStrLn("You are leaving the booking system....")
         else 
             do
-                putStrLn("Invalid input, please enter in form of xx:00") 
+                putStrLn("Invalid input, please enter the time in form of xx:00 and from schedule list") 
                 checkSchedule name date slotList
         
+-- finds the nearest available time on the selected date
+findNTime :: [Char] -> [Char] -> String -> [TimeSlot] -> IO ()
+findNTime name date inputTimeAsString slotList =
+    do
+        let timePick = take 2 inputTimeAsString -- "12"
+        let timePicked = read timePick::Integer -- 12
+        putStrLn("Trying to find the nearest available time on " ++ date ++ " for " ++ name ++ " ...")
+        checkNearest name slotList timePicked timePicked inputTimeAsString date
+
+-- check user's input to determine what suggestions to give
+checkOptions :: [Char] -> [Char] -> String -> [TimeSlot] -> IO ()
+checkOptions name date timeStr slotList =
+    do
+        putStrLn("")
+        putStrLn("Enter 1 to find the nearest available time of the same barber")
+        putStrLn("Enter 2 to find available barber on the same time")
+        putStrLn("Enter q to quit")
+        func <- getLine 
+        if func == "1"
+            then do
+                findNTime name date timeStr slotList 
+        else if func == "2"
+            then do
+                findABarber name date timeStr 
+        else if (elem func ["quit", "QUIT", "Q", "q"])
+            then do 
+                putStrLn("You are leaving the booking system....")
+        else 
+            do
+                putStrLn("Invalid input!") 
+                checkOptions name date timeStr slotList 
+
+-- checks if the csv file on the selected date for a barber exists
+ifDateExist :: [Char] -> [Char] -> IO ()
+ifDateExist name date =
+    do
+        let fileName = name ++ date ++ ".csv"
+        doExist <- (doesFileExist fileName)
+        if doExist
+            then do
+                file <- readCsv (fileName)
+                let slotList = readCsvToSlot file
+                let printableSlot = toPrintableString slotList
+                putStrLn(name ++ " has the following schedule on " ++ date ++ ": ")
+                putStrLn("---------------------------------------------")
+                putStrLn(printableSlot)
+                processCancel name date slotList 
+                
+        else 
+            do
+                putStrLn("The schedule you want to cancel does not exist.")
+                checkInputQuit
+            
+-- finds the available barber on the selected date and time
+findABarber :: [Char] -> [Char] -> String -> IO ()
+findABarber name date inputTimeAsString =
+    do
+        putStrLn("Checking if other barber is available on " ++ date ++ " " ++ inputTimeAsString ++ " ...")
+        if elem name ["Tony", "tony", "TONY"]
+            then do
+                checkBarberAva "tom" date inputTimeAsString
+        else if elem name ["Tom", "tom", "TOM"]
+            then do
+                checkBarberAva "tony" date inputTimeAsString
+        else
+            do
+                putStrLn("")
+
+-- checks if csv of the selected barber exist and check if the selected time in the file is a free slot
+checkBarberAva :: [Char] -> [Char] -> String -> IO ()
+checkBarberAva name date inputTimeAsString = 
+    do
+        let fileName = name ++ date ++ ".csv"
+        doExist <- (doesFileExist fileName)
+        if doExist
+            then do
+                file <- readCsv (fileName)
+                let slotList = readCsvToSlot file
+                let printableSlot = toPrintableString slotList
+                let timeWanted = convertStringtoTime inputTimeAsString
+                if checkAva slotList timeWanted
+                    then do 
+                        checkBooking name date inputTimeAsString slotList
+                else do 
+                    putStrLn("Sorry, no other barber is available on " ++ date ++ " " ++ inputTimeAsString ++ " .")
+                    checkOptions name date inputTimeAsString slotList
+        else
+            do
+
+                file <- readCsv (name ++ ".csv")
+                let slotList = readCsvToSlot file
+                checkBooking name date inputTimeAsString slotList
+                
+-- process input for booking
+checkBooking :: [Char] -> [Char] -> String -> [TimeSlot] -> IO ()
+checkBooking name date inputTimeAsString slotList = 
+    do
+        putStrLn("Barber " ++ name ++ " is available on " ++ date ++ " " ++ inputTimeAsString ++ ", do you want to add your boooking? (y/n)")
+        func <- getLine 
+        if func == "y"
+            then do
+                let timeWanted = convertStringtoTime inputTimeAsString
+                processBooking name timeWanted slotList date
+        else if func == "n"
+            then do
+                mainMenu
+        else if (elem func ["quit", "QUIT", "Q", "q"])
+            then do 
+                putStrLn("You are leaving the booking system....")
+        else 
+            do
+                putStrLn("Invalid input!")
+                checkBarberAva name date inputTimeAsString
 
 
-        
+
 -- find the nearest availble time to schedule, process booking schedule
 -- when entered time is not availble for the selected barber
-checkNearest :: String -> [TimeSlot] -> Integer -> Integer -> String -> IO ()
-checkNearest name slotList earlier later date = 
+checkNearest :: String -> [TimeSlot] -> Integer -> Integer -> String -> String -> IO ()
+checkNearest name slotList earlier later inputTimeAsString date = 
     if (earlier >= 10 || later <= 17)
         then do
             let sete = earlier-1
@@ -296,7 +381,7 @@ checkNearest name slotList earlier later date =
                     putStrLn(printResults)
                     putStrLn("---------------------------------------------")
                     putStrLn("Please enter the time (in form of xx:00)")
-                    putStrLn("if you want to schedule an available time listed above")
+                    putStrLn("if you want to schedule an available time listed above, or q to quit.")
                     inputTimeAsString <- getLine 
 
                     if (elem inputTimeAsString ["10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"])
@@ -313,12 +398,13 @@ checkNearest name slotList earlier later date =
                     else 
                         do
                             putStrLn("Invalid input!") 
-                            checkNearest name slotList earlier later date  
+                            checkNearest name slotList earlier later inputTimeAsString date  
             else do
-                checkNearest name slotList sete setl date
+                checkNearest name slotList sete setl inputTimeAsString date
                 
     else do
-            putStrLn("No time is available on " ++ date ++ " for " ++ name ++ ", please check other dates or barbers.")
+            putStrLn("No time is available on " ++ date ++ " for " ++ name ++ ", please check other barbers.")
+            checkOptions name date inputTimeAsString slotList
             
 
 
